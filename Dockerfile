@@ -11,6 +11,6 @@ RUN npm install -g @loopback/cli
 
 RUN mkdir -p /home/node/app
 
-USER node
+#USER node
 
 WORKDIR /home/node/app
