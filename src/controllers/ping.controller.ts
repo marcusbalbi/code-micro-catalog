@@ -29,6 +29,27 @@ const PING_RESPONSE: ResponseObject = {
 };
 
 /**
+ * OpenAPI response for ping()
+ */
+const PONG_RESPONSE: ResponseObject = {
+  description: 'Pong Response',
+  content: {
+    'application/json': {
+      schema: {
+        type: 'object',
+        title: 'PongResponse',
+        properties: {
+          message: {
+            type: 'string',
+            default: 'ponga',
+          },
+        },
+      },
+    },
+  },
+};
+
+/**
  * A simple controller to bounce back http requests
  */
 export class PingController {
@@ -47,6 +68,25 @@ export class PingController {
       date: new Date(),
       url: this.req.url,
       headers: Object.assign({}, this.req.headers),
+    };
+  }
+  @get('/pong', {
+    parameters: [
+      {
+        in: 'query',
+        name: 'type',
+        description: 'Type of pong',
+        required: true,
+      },
+    ],
+    responses: {
+      '200': PONG_RESPONSE,
+    },
+  })
+  pong(): object {
+    console.log(this.req.query);
+    return {
+      message: 'PONG!',
     };
   }
 }
