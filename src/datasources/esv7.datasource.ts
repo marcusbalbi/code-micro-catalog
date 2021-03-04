@@ -29,6 +29,15 @@ const config = {
         },
       },
     },
+    is_active: {
+      type: 'boolean',
+    },
+    created_at: {
+      type: 'date',
+    },
+    updated_at: {
+      type: 'date',
+    },
   },
 };
 // Observe application's life cycle to disconnect the datasource when

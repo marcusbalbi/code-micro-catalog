@@ -21,6 +21,24 @@ export class Category extends Entity {
   })
   description?: string;
 
+  @property({
+    type: 'boolean',
+    required: false,
+  })
+  is_active = true;
+
+  @property({
+    type: 'date',
+    required: true,
+  })
+  created_at: Date;
+
+  @property({
+    type: 'date',
+    required: true,
+  })
+  updated_at: Date;
+
   constructor(data?: Partial<Category>) {
     super(data);
   }

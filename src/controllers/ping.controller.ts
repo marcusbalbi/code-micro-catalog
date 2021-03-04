@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/camelcase */
 import {Request, RestBindings, get, ResponseObject} from '@loopback/rest';
 import {inject} from '@loopback/context';
 import {CategoryRepository} from '../repositories';
@@ -102,6 +103,8 @@ export class PingController {
         id: '1',
         name: 'Teste 1',
         description: 'TESTE DE DESCRICAO',
+        created_at: new Date(),
+        updated_at: new Date(),
       });
     } catch (err) {
       return err;
