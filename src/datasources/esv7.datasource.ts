@@ -13,7 +13,23 @@ const config = {
     requestTimeout: process.env.ELASTIC_SEARCH_REQUEST_TIMEOUT,
     pingTimeout: process.env.ELASTIC_SEARCH_PING_TIMEOUT,
   },
-  mappingProperties: {},
+  mappingProperties: {
+    docType: {
+      type: 'keyword',
+    },
+    id: {
+      type: 'keyword',
+    },
+    name: {
+      type: 'text',
+      fields: {
+        keyword: {
+          type: 'keyword',
+          ignore_above: 256,
+        },
+      },
+    },
+  },
 };
 // Observe application's life cycle to disconnect the datasource when
 // application is stopped. This allows the application to be shut down
