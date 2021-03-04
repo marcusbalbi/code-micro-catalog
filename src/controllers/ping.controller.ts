@@ -97,15 +97,15 @@ export class PingController {
 
   @get('/categories')
   async index() {
-    try {
-      await this.categoryRep.create({
-        id: '1',
-        name: 'Teste 1',
-        description: 'TESTE DE DESCRICAO',
-      });
-    } catch (err) {
-      return err;
-    }
+    // try {
+    //   await this.categoryRep.create({
+    //     id: '1',
+    //     name: 'Teste 1',
+    //     description: 'TESTE DE DESCRICAO',
+    //   });
+    // } catch (err) {
+    //   return err;
+    // }
     return this.categoryRep.find();
   }
 }
