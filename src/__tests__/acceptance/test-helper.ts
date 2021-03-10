@@ -20,7 +20,7 @@ export async function setupApplication(): Promise<AppWithClient> {
 
   await app.boot();
   await app.start();
-
+  // @ts-ignore
   const client = createRestAppClient(app);
 
   return {app, client};

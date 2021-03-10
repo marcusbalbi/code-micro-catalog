@@ -68,7 +68,7 @@ export class PingController {
   })
   async ping() {
     // Reply with a greeting, the current time, the url, and request headers
-    console.log(await this.categoryRep.count().catch(err => console.log(err)));
+    // console.log(await this.categoryRep.count().catch(err => console.log(err)));
     return {
       greeting: 'Hello from LoopBack',
       date: new Date(),
@@ -90,7 +90,7 @@ export class PingController {
     },
   })
   pong(): object {
-    console.log(this.req.query);
+    // console.log(this.req.query);
     return {
       message: 'PONG!',
     };
