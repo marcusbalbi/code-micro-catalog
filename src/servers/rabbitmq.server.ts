@@ -1,9 +1,18 @@
 import {Context} from '@loopback/context';
 import {Server} from '@loopback/core';
+import {repository} from '@loopback/repository';
 import {Channel, connect, Connection, ConsumeMessage, Replies} from 'amqplib';
+import {Category} from '../models';
+import {CategoryRepository} from '../repositories';
 export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
   conn: Connection;
+  constructor(
+    @repository(CategoryRepository)
+    private categoryRepository: CategoryRepository,
+  ) {
+    super();
+  }
   async start(): Promise<void> {
     console.log('starting rabbitmq');
     this.conn = await connect({
@@ -30,27 +39,51 @@ export class RabbitmqServer extends Context implements Server {
 
     await channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
 
-    // const result = channel.publish(
-    //   exchange.exchange,
-    //   'minha-routing-key',
-    //   Buffer.from(JSON.stringify({ola: 'mundo', time: Date.now()})),
-    // );
-
     channel
       .consume(queue.queue, (message: ConsumeMessage | null) => {
         if (!message) {
           return;
         }
-        console.log(
-          'Message Received!',
-          JSON.parse(message.content.toString()),
-        );
+        const data = JSON.parse(message.content.toString());
         const [model, event] = message.fields.routingKey.split('.').slice(1);
-        console.log(model, event);
+        this.sync({
+          model,
+          event,
+          data,
+        }).catch(err => console.log(err));
       })
       .catch(err => console.log(err));
 
     // console.log(result);
+  }
+
+  async sync({
+    model,
+    event,
+    data,
+  }: {
+    model: string;
+    event: string;
+    data: Category;
+  }) {
+    /**
+     * {
+"id": 1,
+"name": "BBB",
+"description": "Teste rabbit"
+}
+     */
+    if (model === 'category') {
+      switch (event) {
+        case 'created':
+          await this.categoryRepository.create({
+            ...data,
+            created_at: new Date(),
+            updated_at: new Date(),
+          });
+          break;
+      }
+    }
   }
 
   async stop(): Promise<void> {
