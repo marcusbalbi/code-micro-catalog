@@ -13,7 +13,7 @@ services:
       - .:/home/node/app
     networks:
       - app-network
-      - rabbitmq_micro-catalog
+      - rabbitmq_codeflix
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.5.1
     container_name: micro-catalog-elasticsearch
@@ -35,5 +35,5 @@ services:
 networks:
   app-network:
     driver: bridge
-  rabbitmq_micro-catalog:
+  rabbitmq_codeflix:
     external: true
