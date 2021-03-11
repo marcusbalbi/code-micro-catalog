@@ -81,9 +81,19 @@ export class RabbitmqServer extends Context implements Server {
         case 'created':
           await this.categoryRepository.create({
             ...data,
-            created_at: new Date(),
-            updated_at: new Date(),
+            // sera trocado pelo created_at vindo de outro microservico, mantendo aqui apenas para facilitar os testes
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           });
+          break;
+        case 'updated':
+          await this.categoryRepository.updateById(data.id, {
+            ...data,
+            updated_at: new Date().toISOString(),
+          });
+          break;
+        case 'deleted':
+          await this.categoryRepository.deleteById(data.id);
           break;
       }
     }
