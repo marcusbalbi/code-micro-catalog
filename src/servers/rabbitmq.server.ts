@@ -7,6 +7,7 @@ import {CategoryRepository} from '../repositories';
 export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
   conn: Connection;
+  channel: Channel;
   constructor(
     @repository(CategoryRepository)
     private categoryRepository: CategoryRepository,
@@ -28,18 +29,18 @@ export class RabbitmqServer extends Context implements Server {
     return undefined;
   }
   async boot() {
-    const channel: Channel = await this.conn.createChannel();
-    const queue: Replies.AssertQueue = await channel.assertQueue(
+    this.channel = await this.conn.createChannel();
+    const queue: Replies.AssertQueue = await this.channel.assertQueue(
       'micro-catalog/sync-videos',
     );
-    const exchange: Replies.AssertExchange = await channel.assertExchange(
+    const exchange: Replies.AssertExchange = await this.channel.assertExchange(
       'amq.topic',
       'topic',
     );
 
-    await channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
+    await this.channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
 
-    channel
+    this.channel
       .consume(queue.queue, (message: ConsumeMessage | null) => {
         if (!message) {
           return;
@@ -50,7 +51,9 @@ export class RabbitmqServer extends Context implements Server {
           model,
           event,
           data,
-        }).catch(err => console.log(err));
+        })
+          .then(() => this.channel.ack(message))
+          .catch(err => this.channel.reject(message, false));
       })
       .catch(err => console.log(err));
 
