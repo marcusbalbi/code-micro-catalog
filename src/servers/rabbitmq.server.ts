@@ -20,32 +20,37 @@ export class RabbitmqServer extends Context implements Server {
   }
   async boot() {
     const channel: Channel = await this.conn.createChannel();
+    const queue: Replies.AssertQueue = await channel.assertQueue(
+      'micro-catalog/sync-videos',
+    );
     const exchange: Replies.AssertExchange = await channel.assertExchange(
-      'amq.direct',
-      'direct',
-    );
-    const queue: Replies.AssertQueue = await channel.assertQueue('first-queue');
-
-    await channel.bindQueue(
-      queue.queue,
-      exchange.exchange,
-      'minha-routing-key',
+      'amq.topic',
+      'topic',
     );
 
-    const result = channel.publish(
-      exchange.exchange,
-      'minha-routing-key',
-      Buffer.from(JSON.stringify({ola: 'mundo', time: Date.now()})),
-    );
+    await channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
+
+    // const result = channel.publish(
+    //   exchange.exchange,
+    //   'minha-routing-key',
+    //   Buffer.from(JSON.stringify({ola: 'mundo', time: Date.now()})),
+    // );
 
     channel
-      .consume('first-queue', (payload: ConsumeMessage | null) => {
-        console.log('Message Received!', payload?.content.toString());
-        console.log(payload);
+      .consume(queue.queue, (message: ConsumeMessage | null) => {
+        if (!message) {
+          return;
+        }
+        console.log(
+          'Message Received!',
+          JSON.parse(message.content.toString()),
+        );
+        const [model, event] = message.fields.routingKey.split('.').slice(1);
+        console.log(model, event);
       })
       .catch(err => console.log(err));
 
-    console.log(result);
+    // console.log(result);
   }
 
   async stop(): Promise<void> {
