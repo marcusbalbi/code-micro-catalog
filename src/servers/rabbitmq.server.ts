@@ -1,7 +1,8 @@
-import {Context} from '@loopback/context';
+import {Context, inject} from '@loopback/context';
 import {Server} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {Channel, connect, Connection, ConsumeMessage, Replies} from 'amqplib';
+import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
 export class RabbitmqServer extends Context implements Server {
@@ -9,6 +10,8 @@ export class RabbitmqServer extends Context implements Server {
   conn: Connection;
   channel: Channel;
   constructor(
+    @inject(RabbitmqBindings.CONFIG)
+    private config: {uri: string},
     @repository(CategoryRepository)
     private categoryRepository: CategoryRepository,
   ) {
@@ -16,11 +19,7 @@ export class RabbitmqServer extends Context implements Server {
   }
   async start(): Promise<void> {
     console.log('starting rabbitmq');
-    this.conn = await connect({
-      hostname: 'rabbitmq',
-      username: 'admin',
-      password: 'admin',
-    });
+    this.conn = await connect(this.config.uri);
     this._listening = true;
     this.boot().catch(err => {
       console.log('Falha ao iniciar:' + err.messag);
