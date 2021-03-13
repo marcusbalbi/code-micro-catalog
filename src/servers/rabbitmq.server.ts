@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
 import {Context, inject} from '@loopback/context';
 import {Server} from '@loopback/core';
 import {repository} from '@loopback/repository';
@@ -7,7 +8,7 @@ import {
   ChannelWrapper,
   connect,
 } from 'amqp-connection-manager';
-import {Channel, ConsumeMessage, Replies} from 'amqplib';
+import {Channel, ConfirmChannel, Options} from 'amqplib';
 import {RabbitmqBindings} from '../keys';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
@@ -15,12 +16,13 @@ import {CategoryRepository} from '../repositories';
 export interface RabbitmqConfig {
   uri: string;
   connOptions?: AmqpConnectionManagerOptions;
+  exchanges?: {name: string; type: string; options?: Options.AssertExchange}[];
 }
+
 export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
   private _conn: AmqpConnectionManager;
   private _channelManager: ChannelWrapper;
-  channel: Channel;
   constructor(
     @inject(RabbitmqBindings.CONFIG)
     private config: RabbitmqConfig,
@@ -42,8 +44,28 @@ export class RabbitmqServer extends Context implements Server {
       this._listening = false;
       console.log(`Failed connectig with RabbitMQ - ${name} : ${err.message}`);
     });
-
+    await this.setupExchanges();
     return undefined;
+  }
+  async setupExchanges() {
+    try {
+      this._channelManager.addSetup(async (channel: ConfirmChannel) => {
+        if (!this.config.exchanges) {
+          return;
+        }
+        await Promise.all(
+          this.config.exchanges.map(exchange => {
+            channel.assertExchange(exchange.name, exchange.type).catch(err => {
+              console.log(err);
+            });
+          }),
+        ).catch(err => {
+          throw err;
+        });
+      });
+    } catch (err) {
+      console.log(err);
+    }
   }
   async boot() {
     /*this.channel = await this.conn.createChannel();
@@ -128,5 +150,8 @@ export class RabbitmqServer extends Context implements Server {
 
   get conn(): AmqpConnectionManager {
     return this._conn;
+  }
+  get channelManager(): ChannelWrapper {
+    return this._channelManager;
   }
 }
