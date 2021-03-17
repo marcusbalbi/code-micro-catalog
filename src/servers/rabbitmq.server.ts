@@ -91,7 +91,47 @@ export class RabbitmqServer extends Context implements Server {
             channel.bindQueue(assertQueue.queue, exchange, x),
           ),
         );
+        await this.consume({
+          channel,
+          queue: assertQueue.queue,
+          method: item.method,
+        });
       });
+    });
+  }
+
+  private async consume({
+    channel,
+    queue,
+    method,
+  }: {
+    channel: ConfirmChannel;
+    queue: string;
+    method: Function;
+  }) {
+    await channel.consume(queue, message => {
+      try {
+        if (!message) {
+          throw new Error('Received null Message');
+        }
+        const content = message.content;
+        if (content) {
+          let data;
+          try {
+            data = JSON.parse(content.toString());
+          } catch (err) {
+            data = null;
+          }
+          console.log(data);
+          method({data, message, channel}).then(() => {
+            console.log('ACK!!!!!!!!!!!');
+            channel.ack(message);
+          });
+        }
+      } catch (err) {
+        console.log(err);
+        // definir politica de resposta
+      }
     });
   }
 

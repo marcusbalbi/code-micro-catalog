@@ -15,7 +15,7 @@ export class CategorySyncService {
     routingKey: 'model.category.*',
     queue: 'x',
   })
-  hander() {
-    console.log(this.categoryRepository.entityClass);
+  async hander({data}: {data: any}) {
+    console.log(data, '==================================================');
   }
 }
