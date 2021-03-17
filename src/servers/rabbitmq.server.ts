@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-import {Context, inject, MetadataInspector} from '@loopback/context';
+import {Binding, Context, inject, MetadataInspector} from '@loopback/context';
 import {Application, CoreBindings, Server} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {
@@ -16,7 +16,6 @@ import {
   RabbitmqSubscribeMetadata,
   RABBITMQ_SUBSCRIBE_DECORATOR,
 } from '../decorators/rabbitmq-subscribe.decorator';
-import {CategorySyncService} from '../services';
 export interface RabbitmqConfig {
   uri: string;
   connOptions?: AmqpConnectionManagerOptions;
@@ -51,14 +50,7 @@ export class RabbitmqServer extends Context implements Server {
       console.log(`Failed connectig with RabbitMQ - ${name} : ${err.message}`);
     });
     await this.setupExchanges();
-
-    const service = this.getSync<CategorySyncService>(
-      'services.CategorySyncService',
-    );
-    const metadata = MetadataInspector.getAllMethodMetadata<
-      RabbitmqSubscribeMetadata
-    >(RABBITMQ_SUBSCRIBE_DECORATOR, service);
-    console.log(metadata);
+    console.log(this.getSubscribers());
     return undefined;
   }
   async setupExchanges() {
@@ -81,6 +73,41 @@ export class RabbitmqServer extends Context implements Server {
       console.log(err);
     }
   }
+
+  private getSubscribers() {
+    const bindings: Array<Readonly<Binding>> = this.find('services.*');
+
+    return bindings.map(binding => {
+      const metadata = MetadataInspector.getAllMethodMetadata<
+        RabbitmqSubscribeMetadata
+      >(RABBITMQ_SUBSCRIBE_DECORATOR, binding.valueConstructor?.prototype);
+
+      if (!metadata) {
+        return [];
+      }
+      const methods = [];
+      for (const methodName in metadata) {
+        if (!Object.prototype.hasOwnProperty.call(metadata, methodName)) {
+          continue;
+        }
+        const service = this.getSync(binding.key) as any;
+
+        methods.push({
+          method: service[methodName].bind(service),
+        });
+      }
+      return methods;
+    });
+
+    // const service = this.getSync<CategorySyncService>(
+    //   'services.CategorySyncService',
+    // );
+    // const metadata = MetadataInspector.getAllMethodMetadata<
+    //   RabbitmqSubscribeMetadata
+    // >(RABBITMQ_SUBSCRIBE_DECORATOR, service);
+    // console.log(metadata);
+  }
+
   async boot() {
     /*this.channel = await this.conn.createChannel();
     const queue: Replies.AssertQueue = await this.channel.assertQueue(
