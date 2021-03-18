@@ -1,17 +1,14 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import {Binding, Context, inject, MetadataInspector} from '@loopback/context';
 import {Application, CoreBindings, Server} from '@loopback/core';
-import {repository} from '@loopback/repository';
 import {
   AmqpConnectionManager,
   AmqpConnectionManagerOptions,
   ChannelWrapper,
   connect,
 } from 'amqp-connection-manager';
-import {Channel, ConfirmChannel, Options} from 'amqplib';
+import {ConfirmChannel, Options} from 'amqplib';
 import {RabbitmqBindings} from '../keys';
-import {Category} from '../models';
-import {CategoryRepository} from '../repositories';
 import {
   RabbitmqSubscribeMetadata,
   RABBITMQ_SUBSCRIBE_DECORATOR,
@@ -31,11 +28,10 @@ export class RabbitmqServer extends Context implements Server {
     public app: Application,
     @inject(RabbitmqBindings.CONFIG)
     private config: RabbitmqConfig,
-    @repository(CategoryRepository)
-    private categoryRepository: CategoryRepository,
   ) {
     super(app);
   }
+
   async start(): Promise<void> {
     console.log('starting rabbitmq', this.config);
     this._conn = connect([this.config.uri], this.config.connOptions);
@@ -53,6 +49,7 @@ export class RabbitmqServer extends Context implements Server {
     await this.bindSubscribers();
     return undefined;
   }
+
   async setupExchanges() {
     try {
       this._channelManager.addSetup(async (channel: ConfirmChannel) => {
@@ -122,7 +119,7 @@ export class RabbitmqServer extends Context implements Server {
           } catch (err) {
             data = null;
           }
-          console.log(data);
+          console.log('message received', queue, message.fields.routingKey);
           method({data, message, channel}).then(() => {
             console.log('ACK!!!!!!!!!!!');
             channel.ack(message);
@@ -168,69 +165,6 @@ export class RabbitmqServer extends Context implements Server {
         collection.push(...item);
         return collection;
       }, []);
-  }
-
-  async boot() {
-    /*this.channel = await this.conn.createChannel();
-    const queue: Replies.AssertQueue = await this.channel.assertQueue(
-      'micro-catalog/sync-videos',
-    );
-    const exchange: Replies.AssertExchange = await this.channel.assertExchange(
-      'amq.topic',
-      'topic',
-    );
-
-    await this.channel.bindQueue(queue.queue, exchange.exchange, 'model.*.*');
-
-    this.channel
-      .consume(queue.queue, (message: ConsumeMessage | null) => {
-        if (!message) {
-          return;
-        }
-        const data = JSON.parse(message.content.toString());
-        const [model, event] = message.fields.routingKey.split('.').slice(1);
-        this.sync({
-          model,
-          event,
-          data,
-        })
-          .then(() => this.channel.ack(message))
-          .catch(err => this.channel.reject(message, false));
-      })
-      .catch(err => console.log(err));
-
-    // console.log(result);*/
-  }
-
-  async sync({
-    model,
-    event,
-    data,
-  }: {
-    model: string;
-    event: string;
-    data: Category;
-  }) {
-    /**
-     * {
-"id": 1,
-"name": "BBB",
-"description": "Teste rabbit"
-}
-     */
-    if (model === 'category') {
-      switch (event) {
-        case 'created':
-          await this.categoryRepository.create(data);
-          break;
-        case 'updated':
-          await this.categoryRepository.updateById(data.id, data);
-          break;
-        case 'deleted':
-          await this.categoryRepository.deleteById(data.id);
-          break;
-      }
-    }
   }
 
   async stop(): Promise<void> {

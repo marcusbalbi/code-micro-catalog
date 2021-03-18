@@ -2,32 +2,31 @@ import {bind, /* inject, */ BindingScope} from '@loopback/core';
 import {repository} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {rabbitmqSubscribe} from '../decorators/rabbitmq-subscribe.decorator';
-import {CategoryRepository} from '../repositories';
+import {CastMemberRepository} from '../repositories';
 
-const QUEUE_NAME = 'micro-catalog/sync-videos/category';
 @bind({scope: BindingScope.TRANSIENT})
-export class CategorySyncService {
+export class CastMemberSyncService {
   constructor(
-    @repository(CategoryRepository)
-    private categoryRepository: CategoryRepository,
+    @repository(CastMemberRepository)
+    private castMemberRepository: CastMemberRepository,
   ) {}
 
   @rabbitmqSubscribe({
     exchange: 'amq.topic',
-    routingKey: 'model.category.*',
-    queue: 'micro-catalog/sync-videos/category',
+    routingKey: 'model.cast_member.*',
+    queue: 'micro-catalog/sync-videos/cast_member',
   })
   async handler({data, message}: {data: any; message: Message}) {
     const action = message.fields.routingKey.split('.')[2];
     switch (action) {
       case 'created':
-        await this.categoryRepository.create(data);
+        await this.castMemberRepository.create(data);
         break;
       case 'updated':
-        await this.categoryRepository.updateById(data.id, data);
+        await this.castMemberRepository.updateById(data.id, data);
         break;
       case 'deleted':
-        await this.categoryRepository.deleteById(data.id);
+        await this.castMemberRepository.deleteById(data.id);
         break;
     }
   }
