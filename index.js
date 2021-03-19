@@ -21,10 +21,7 @@ if (require.main === module) {
     },
     rabbitmq: {
       uri: process.env.RABBITMQ_URI,
-      exchanges: [
-        {name: 'test1', type: 'direct'},
-        {name: 'test2', type: 'direct'},
-      ],
+      defaultHandlerError: parseInt(process.env.RABBITMQ_HANDLER_ERROR),
     },
   };
   application.main(config).catch(err => {

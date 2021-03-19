@@ -98,6 +98,6 @@ export class PingController {
 
   @get('/categories')
   async index() {
-    return this.categoryRep.count({});
+    return this.categoryRep.find({});
   }
 }

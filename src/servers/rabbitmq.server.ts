@@ -7,16 +7,23 @@ import {
   ChannelWrapper,
   connect,
 } from 'amqp-connection-manager';
-import {ConfirmChannel, Options} from 'amqplib';
+import {Channel, ConfirmChannel, Message, Options} from 'amqplib';
 import {RabbitmqBindings} from '../keys';
 import {
   RabbitmqSubscribeMetadata,
   RABBITMQ_SUBSCRIBE_DECORATOR,
 } from '../decorators/rabbitmq-subscribe.decorator';
+
+export enum ResponseEnum {
+  ACK = 0,
+  REQUEUE = 1,
+  NACK = 2,
+}
 export interface RabbitmqConfig {
   uri: string;
   connOptions?: AmqpConnectionManagerOptions;
   exchanges?: {name: string; type: string; options?: Options.AssertExchange}[];
+  defaultHandlerError?: ResponseEnum;
 }
 
 export class RabbitmqServer extends Context implements Server {
@@ -106,7 +113,8 @@ export class RabbitmqServer extends Context implements Server {
     queue: string;
     method: Function;
   }) {
-    await channel.consume(queue, message => {
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
+    await channel.consume(queue, async message => {
       try {
         if (!message) {
           throw new Error('Received null Message');
@@ -120,14 +128,19 @@ export class RabbitmqServer extends Context implements Server {
             data = null;
           }
           console.log('message received', queue, message.fields.routingKey);
-          method({data, message, channel}).then(() => {
-            console.log('ACK!!!!!!!!!!!');
-            channel.ack(message);
-          });
+          const responseType = await method({data, message, channel});
+          this.dispatchResponse(channel, message, responseType);
         }
       } catch (err) {
         console.log(err);
-        // definir politica de resposta
+        if (!message) {
+          return;
+        }
+        this.dispatchResponse(
+          channel,
+          message,
+          this.config.defaultHandlerError,
+        );
       }
     });
   }
@@ -165,6 +178,27 @@ export class RabbitmqServer extends Context implements Server {
         collection.push(...item);
         return collection;
       }, []);
+  }
+
+  private dispatchResponse(
+    channel: Channel,
+    message: Message,
+    responseType?: ResponseEnum,
+  ) {
+    switch (responseType) {
+      case ResponseEnum.REQUEUE: {
+        channel.nack(message, false, true);
+        break;
+      }
+      case ResponseEnum.NACK: {
+        channel.nack(message, false, false);
+        break;
+      }
+      case ResponseEnum.ACK:
+      default: {
+        channel.ack(message);
+      }
+    }
   }
 
   async stop(): Promise<void> {
