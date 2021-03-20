@@ -3,6 +3,8 @@ import {MicroCatalogApplication} from '..';
 import * as config from '../../config';
 import {Esv7DataSource} from '../datasources';
 import {Client} from 'es7';
+import fixtures from '../fixtures';
+import {DefaultCrudRepository} from '@loopback/repository';
 export class FixturesCommand {
   static command = 'fixtures';
   static description = 'Fixtures Data in ElasticSearch';
@@ -11,6 +13,14 @@ export class FixturesCommand {
     await this.bootApp();
     console.log(chalk.green('Delete all documents'));
     await this.deleteAllDocuments();
+    for (const fixture of fixtures) {
+      const repository = this.getRepository<DefaultCrudRepository<any, any>>(
+        fixture.model,
+      );
+      await repository.create(fixture.fields);
+    }
+
+    console.log(chalk.green('Documents Generated'));
   }
 
   private async bootApp() {
@@ -35,5 +45,9 @@ export class FixturesCommand {
         },
       },
     });
+  }
+
+  private getRepository<T>(modelName: string): T {
+    return this.app.getSync(`repositories.${modelName}Repository`);
   }
 }
