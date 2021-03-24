@@ -16,7 +16,6 @@ export class Category extends Entity {
     jsonSchema: {
       minLength: 1,
       maxLength: 255,
-      // exists: ['Category', 'id']
     },
   })
   name: string;

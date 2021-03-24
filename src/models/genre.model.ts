@@ -20,6 +20,10 @@ export class Genre extends Entity {
   @property({
     type: 'string',
     required: true,
+    jsonSchema: {
+      minLength: 1,
+      maxLength: 255,
+    },
   })
   name: string;
 
