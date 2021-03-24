@@ -13,6 +13,11 @@ export class Category extends Entity {
   @property({
     type: 'string',
     required: true,
+    jsonSchema: {
+      minLength: 1,
+      maxLength: 255,
+      // exists: ['Category', 'id']
+    },
   })
   name: string;
 
