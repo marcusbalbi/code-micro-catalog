@@ -7,7 +7,7 @@ import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
-import {RestExplorerComponent} from './components';
+import {RestExplorerComponent, ValidatorsComponent} from './components';
 import {ValidatorService} from './services/validator.service';
 import {Category} from './models';
 
@@ -20,6 +20,7 @@ export class MicroCatalogApplication extends BootMixin(
     // Set up the custom sequence
     options.rest.sequence = MySequence;
     this.component(RestComponent);
+    this.component(ValidatorsComponent);
     const restServer = this.getSync<RestServer>('servers.RestServer');
     restServer.static('/', path.join(__dirname, '../public'));
 
