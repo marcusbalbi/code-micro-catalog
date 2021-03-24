@@ -8,6 +8,8 @@ import path from 'path';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
 import {RestExplorerComponent} from './components';
+import {ValidatorService} from './services/validator.service';
+import {Category} from './models';
 
 export class MicroCatalogApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(Application)),
@@ -40,5 +42,15 @@ export class MicroCatalogApplication extends BootMixin(
     this.server(RabbitmqServer);
   }
 
-  // async boot() {}
+  async boot() {
+    await super.boot();
+    // const validator = this.getSync<ValidatorService>(
+    //   'services.ValidatorService',
+    // );
+
+    // await validator.validate({
+    //   data: {},
+    //   entityClass: Category,
+    // });
+  }
 }
