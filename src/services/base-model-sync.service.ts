@@ -80,13 +80,7 @@ export abstract class BaseModelSyncService {
         "relation_ids": ["1231545312"]
         }
      */
-    const fieldsRelation = Object.keys(
-      repo.modelClass.definition.properties[relation].jsonSchema.items
-        .properties,
-    ).reduce((obj: any, curr) => {
-      obj[curr] = true;
-      return obj;
-    }, {});
+    const fieldsRelation = this.extractFieldsRelation(repo, relation);
     const collection = await repoRelation.find({
       where: {
         or: relationIds.map((relId) => {
@@ -106,5 +100,18 @@ export abstract class BaseModelSyncService {
       throw error;
     }
     await repo.updateById(id, {[relation]: collection});
+  }
+
+  protected extractFieldsRelation(
+    repo: DefaultCrudRepository<any, any>,
+    relation: string,
+  ) {
+    return Object.keys(
+      repo.modelClass.definition.properties[relation].jsonSchema.items
+        .properties,
+    ).reduce((obj: any, curr) => {
+      obj[curr] = true;
+      return obj;
+    }, {});
   }
 }
