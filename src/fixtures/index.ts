@@ -1,2 +1,3 @@
 import categories from './categories.fixtures';
-export default [...categories];
+import genres from './genres.fixtures';
+export default [...categories, ...genres];

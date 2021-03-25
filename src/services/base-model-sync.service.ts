@@ -9,6 +9,13 @@ export interface SyncOptions {
   message: Message;
 }
 
+export interface SyncRelationsOptions {
+  id: string;
+  relationIds: string[];
+  repoRelation: DefaultCrudRepository<any, any>;
+  message: Message;
+}
+
 export abstract class BaseModelSyncService {
   constructor(public validateService: ValidatorService) {}
   protected async sync({repo, data, message}: SyncOptions) {
@@ -56,5 +63,18 @@ export abstract class BaseModelSyncService {
       ...(exists && {options: {partial: true}}),
     });
     return exists ? repo.updateById(id, entity) : repo.create(entity);
+  }
+
+  async syncRelations({id, relationIds, repoRelation}: SyncRelationsOptions) {
+    const collection = await repoRelation.find({
+      where: {
+        or: relationIds.map((relId) => {
+          return {
+            id: relId,
+          };
+        }),
+      },
+    });
+    console.log(collection);
   }
 }
