@@ -1,4 +1,5 @@
 import {Entity, model, property} from '@loopback/repository';
+import {SmallCategory} from './category.model';
 
 @model()
 export class Genre extends Entity {
@@ -38,6 +39,29 @@ export class Genre extends Entity {
     required: true,
   })
   updated_at: string;
+
+  @property({
+    type: 'object',
+    jsonSchema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+          },
+          name: {
+            type: 'string',
+          },
+          is_active: {
+            type: 'boolean',
+          },
+        },
+      },
+      uniqueItems: true,
+    },
+  })
+  categories: SmallCategory;
 
   constructor(data?: Partial<Genre>) {
     super(data);
