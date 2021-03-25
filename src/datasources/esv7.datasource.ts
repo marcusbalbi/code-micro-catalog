@@ -44,6 +44,22 @@ const config = {
     updated_at: {
       type: 'date',
     },
+    categories: {
+      type: 'nested',
+      properties: {
+        id: {type: 'keyword'},
+        name: {
+          type: 'text',
+          fields: {
+            keyword: {
+              type: 'keyword',
+              ignore_above: 256,
+            },
+          },
+        },
+        is_active: {type: 'boolean'},
+      },
+    },
   },
 };
 // Observe application's life cycle to disconnect the datasource when
@@ -51,7 +67,8 @@ const config = {
 // gracefully. The `stop()` method is inherited from `juggler.DataSource`.
 // Learn more at https://loopback.io/doc/en/lb4/Life-cycle.html
 @lifeCycleObserver('datasource')
-export class Esv7DataSource extends juggler.DataSource
+export class Esv7DataSource
+  extends juggler.DataSource
   implements LifeCycleObserver {
   static dataSourceName = 'esv7';
   static readonly defaultConfig = config;
