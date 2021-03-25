@@ -42,6 +42,8 @@ export class GenreSyncService extends BaseModelSyncService {
       id: data.id,
       relationIds: data.relation_ids,
       repoRelation: this.categoryRepo,
+      repo: this.repo,
+      relation: 'categories',
       message,
     });
   }

@@ -1,4 +1,4 @@
-import {DefaultCrudRepository} from '@loopback/repository';
+import {DefaultCrudRepository, EntityNotFoundError} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {pick} from 'lodash';
 import {ValidatorService} from './validator.service';
@@ -13,7 +13,9 @@ export interface SyncRelationsOptions {
   id: string;
   relationIds: string[];
   repoRelation: DefaultCrudRepository<any, any>;
+  repo: DefaultCrudRepository<any, any>;
   message: Message;
+  relation: string;
 }
 
 export abstract class BaseModelSyncService {
@@ -65,7 +67,26 @@ export abstract class BaseModelSyncService {
     return exists ? repo.updateById(id, entity) : repo.create(entity);
   }
 
-  async syncRelations({id, relationIds, repoRelation}: SyncRelationsOptions) {
+  async syncRelations({
+    id,
+    relationIds,
+    repoRelation,
+    relation,
+    repo,
+  }: SyncRelationsOptions) {
+    /**
+     * {
+        "id": "49725b42-64b5-4f91-908e-212b14162b51",
+        "relation_ids": ["1231545312"]
+        }
+     */
+    const fieldsRelation = Object.keys(
+      repo.modelClass.definition.properties[relation].jsonSchema.items
+        .properties,
+    ).reduce((obj: any, curr) => {
+      obj[curr] = true;
+      return obj;
+    }, {});
     const collection = await repoRelation.find({
       where: {
         or: relationIds.map((relId) => {
@@ -74,7 +95,16 @@ export abstract class BaseModelSyncService {
           };
         }),
       },
+      fields: fieldsRelation,
     });
-    console.log(collection);
+    if (!collection.length) {
+      const error = new EntityNotFoundError(
+        repoRelation.entityClass,
+        relationIds,
+      );
+      error.name = 'EntityNotFound';
+      throw error;
+    }
+    await repo.updateById(id, {[relation]: collection});
   }
 }
