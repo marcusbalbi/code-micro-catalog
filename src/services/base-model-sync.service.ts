@@ -99,7 +99,8 @@ export abstract class BaseModelSyncService {
       error.name = 'EntityNotFound';
       throw error;
     }
-    await repo.updateById(id, {[relation]: collection});
+    // await repo.updateById(id, {[relation]: collection});
+    await (repo as any).attachCategories(id, collection);
   }
 
   protected extractFieldsRelation(
