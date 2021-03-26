@@ -43,4 +43,49 @@ export class GenreRepository extends DefaultCrudRepository<
 
     await db.update_by_query(document);
   }
+
+  async updateCategories(data: object[]) {
+    const document = {
+      index: this.dataSource.settings.index,
+      refresh: true,
+      body: {
+        query: {
+          bool: {
+            must: [
+              {
+                nested: {
+                  path: 'categories',
+                  query: {
+                    exists: {field: 'categories'},
+                  },
+                },
+              },
+              {
+                nested: {
+                  path: 'categories',
+                  query: {
+                    term: {
+                      'categories.id': '2503f082-7e26-40df-85f2-7380a68cfdd0',
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+        script: {
+          source: `
+          ctx._source['categories'].removeIf(i -> i.id == params['category']['id']);
+          ctx._source['categories'].add(params['category']);
+        `,
+          params: {
+            category: data,
+          },
+        },
+      },
+    };
+    const db: Client = this.dataSource?.connector?.db;
+
+    await db.update_by_query(document);
+  }
 }
