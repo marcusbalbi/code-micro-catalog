@@ -8,19 +8,19 @@ import path from 'path';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
 import {RestExplorerComponent, ValidatorsComponent} from './components';
-import {ValidatorService} from './services/validator.service';
-import {Category} from './models';
+import {UpdateCategoryRelationObserver} from './observers/update-category-relation.observer';
+import {CategoryRepository, GenreRepository} from './repositories';
 
 export class MicroCatalogApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(Application)),
 ) {
   constructor(options: ApplicationConfig = {}) {
     super(options);
-
     // Set up the custom sequence
     options.rest.sequence = MySequence;
     this.component(RestComponent);
     this.component(ValidatorsComponent);
+    this.lifeCycleObserver(UpdateCategoryRelationObserver);
     const restServer = this.getSync<RestServer>('servers.RestServer');
     restServer.static('/', path.join(__dirname, '../public'));
 
@@ -45,13 +45,23 @@ export class MicroCatalogApplication extends BootMixin(
 
   async boot() {
     await super.boot();
-    // const validator = this.getSync<ValidatorService>(
-    //   'services.ValidatorService',
-    // );
+    setTimeout(async () => {
+      const categoryRepo: CategoryRepository = this.getSync(
+        'repositories.CategoryRepository',
+      );
+      const genreRepo: GenreRepository = this.getSync(
+        'repositories.GenreRepository',
+      );
+      const category = await categoryRepo.find({
+        where: {id: '5bbff04e-f709-4f30-b927-6d9149bbed07'},
+      });
 
-    // await validator.validate({
-    //   data: {},
-    //   entityClass: Category,
-    // });
+      // await genre.updateCategories(category[0]);
+      await categoryRepo.updateById(category[0].id, {
+        ...category[0],
+        name: 'ABCD1231232131',
+      });
+      console.log('updated!');
+    }, 3000);
   }
 }
