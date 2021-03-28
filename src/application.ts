@@ -7,9 +7,12 @@ import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
 import {RabbitmqServer} from './servers';
-import {RestExplorerComponent, ValidatorsComponent} from './components';
-import {UpdateCategoryRelationObserver} from './observers/update-category-relation.observer';
-import {CategoryRepository, GenreRepository} from './repositories';
+import {
+  EntityComponent,
+  RestExplorerComponent,
+  ValidatorsComponent,
+} from './components';
+// import {CategoryRepository, GenreRepository} from './repositories';
 
 export class MicroCatalogApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(Application)),
@@ -20,7 +23,7 @@ export class MicroCatalogApplication extends BootMixin(
     options.rest.sequence = MySequence;
     this.component(RestComponent);
     this.component(ValidatorsComponent);
-    this.lifeCycleObserver(UpdateCategoryRelationObserver);
+    this.component(EntityComponent);
     const restServer = this.getSync<RestServer>('servers.RestServer');
     restServer.static('/', path.join(__dirname, '../public'));
 
