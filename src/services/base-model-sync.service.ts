@@ -11,11 +11,11 @@ export interface SyncOptions {
 
 export interface SyncRelationsOptions {
   id: string;
-  relationIds: string[];
-  repoRelation: DefaultCrudRepository<any, any>;
   repo: DefaultCrudRepository<any, any>;
   message: Message;
-  relation: string;
+  relationName: string;
+  relationIds: string[];
+  relationRepo: DefaultCrudRepository<any, any>;
 }
 
 export abstract class BaseModelSyncService {
@@ -69,10 +69,11 @@ export abstract class BaseModelSyncService {
 
   async syncRelations({
     id,
+    relationName,
     relationIds,
-    repoRelation,
-    relation,
     repo,
+    relationRepo,
+    message,
   }: SyncRelationsOptions) {
     /**
      * {
@@ -80,8 +81,8 @@ export abstract class BaseModelSyncService {
         "relation_ids": ["1231545312"]
         }
      */
-    const fieldsRelation = this.extractFieldsRelation(repo, relation);
-    const collection = await repoRelation.find({
+    const fieldsRelation = this.extractFieldsRelation(repo, relationName);
+    const collection = await relationRepo.find({
       where: {
         or: relationIds.map((relId) => {
           return {
@@ -93,14 +94,17 @@ export abstract class BaseModelSyncService {
     });
     if (!collection.length) {
       const error = new EntityNotFoundError(
-        repoRelation.entityClass,
+        relationRepo.entityClass,
         relationIds,
       );
       error.name = 'EntityNotFound';
       throw error;
     }
+    const action = this.getAction(message);
+    if (action === 'attached') {
+      await (repo as any).attachCategories(id, collection);
+    }
     // await repo.updateById(id, {[relation]: collection});
-    await (repo as any).attachCategories(id, collection);
   }
 
   protected extractFieldsRelation(
