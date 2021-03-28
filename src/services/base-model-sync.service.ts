@@ -1,6 +1,7 @@
 import {DefaultCrudRepository, EntityNotFoundError} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {pick} from 'lodash';
+import {BaseRepository} from '../repositories/base.repository';
 import {ValidatorService} from './validator.service';
 
 export interface SyncOptions {
@@ -11,7 +12,7 @@ export interface SyncOptions {
 
 export interface SyncRelationsOptions {
   id: string;
-  repo: DefaultCrudRepository<any, any>;
+  repo: BaseRepository<any, any>;
   message: Message;
   relationName: string;
   relationIds: string[];
@@ -102,7 +103,7 @@ export abstract class BaseModelSyncService {
     }
     const action = this.getAction(message);
     if (action === 'attached') {
-      await (repo as any).attachCategories(id, collection);
+      await repo.attachRelation(id, relationName, collection);
     }
     // await repo.updateById(id, {[relation]: collection});
   }
