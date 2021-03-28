@@ -45,23 +45,23 @@ export class MicroCatalogApplication extends BootMixin(
 
   async boot() {
     await super.boot();
-    setTimeout(async () => {
-      const categoryRepo: CategoryRepository = this.getSync(
-        'repositories.CategoryRepository',
-      );
-      const genreRepo: GenreRepository = this.getSync(
-        'repositories.GenreRepository',
-      );
-      const category = await categoryRepo.find({
-        where: {id: '5bbff04e-f709-4f30-b927-6d9149bbed07'},
-      });
+    // setTimeout(async () => {
+    //   const categoryRepo: CategoryRepository = this.getSync(
+    //     'repositories.CategoryRepository',
+    //   );
+    //   const genreRepo: GenreRepository = this.getSync(
+    //     'repositories.GenreRepository',
+    //   );
+    //   const category = await categoryRepo.find({
+    //     where: {id: '5bbff04e-f709-4f30-b927-6d9149bbed07'},
+    //   });
 
-      // await genre.updateCategories(category[0]);
-      await categoryRepo.updateById(category[0].id, {
-        ...category[0],
-        name: 'ABCD1231232131',
-      });
-      console.log('updated!');
-    }, 3000);
+    //   // await genre.updateCategories(category[0]);
+    //   await categoryRepo.updateById(category[0].id, {
+    //     ...category[0],
+    //     name: 'ABCD1231232131',
+    //   });
+    //   console.log('updated!');
+    // }, 3000);
   }
 }

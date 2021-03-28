@@ -31,7 +31,7 @@ export class UpdateCategoryRelationObserver implements LifeCycleObserver {
         if (isNewInstance) {
           return;
         }
-        await this.genreRepo.updateCategories(data);
+        await this.genreRepo.updateRelation('categorties', data);
       },
     );
   }

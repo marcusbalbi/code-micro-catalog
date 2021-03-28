@@ -39,12 +39,15 @@ export class BaseRepository<
     await db.update_by_query(document);
   }
 
-  async updateCategories(data: object) {
+  async updateRelation(
+    relationName: string,
+    data: {id: any; [key: string]: string},
+  ) {
     const fields = Object.keys(
-      this.modelClass.definition.properties['categories'].jsonSchema.items
+      this.modelClass.definition.properties[relationName].jsonSchema.items
         .properties,
     );
-    const category = pick(data, fields);
+    const relation = pick(data, fields);
     const document = {
       index: this.dataSource.settings.index,
       refresh: true,
@@ -54,18 +57,18 @@ export class BaseRepository<
             must: [
               {
                 nested: {
-                  path: 'categories',
+                  path: relationName,
                   query: {
-                    exists: {field: 'categories'},
+                    exists: {field: relationName},
                   },
                 },
               },
               {
                 nested: {
-                  path: 'categories',
+                  path: relationName,
                   query: {
                     term: {
-                      'categories.id': (data as any).id,
+                      [`${relationName}.id`]: relation.id,
                     },
                   },
                 },
@@ -75,11 +78,11 @@ export class BaseRepository<
         },
         script: {
           source: `
-          ctx._source['categories'].removeIf(i -> i.id == params['category']['id']);
-          ctx._source['categories'].add(params['category']);
+          ctx._source['${relationName}'].removeIf(i -> i.id == params['relation']['id']);
+          ctx._source['${relationName}'].add(params['relation']);
         `,
           params: {
-            category,
+            relation,
           },
         },
       },
