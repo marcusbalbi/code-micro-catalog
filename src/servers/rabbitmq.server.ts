@@ -53,6 +53,21 @@ export class RabbitmqServer extends Context implements Server {
       console.log(`Failed connectig with RabbitMQ - ${name} : ${err.message}`);
     });
     await this.setupExchanges();
+    this._channelManager.addSetup(async (channel: ConfirmChannel) => {
+      const assertExchange = await channel.assertExchange(
+        'dlx.amq.topic',
+        'topic',
+      );
+      const assertQueue = await channel.assertQueue('dlx.sync-videos', {
+        deadLetterExchange: 'amq.topic',
+        messageTtl: 20000,
+      });
+      channel.bindQueue(
+        assertQueue.queue,
+        assertExchange.exchange,
+        'model.category.*',
+      );
+    });
     await this.bindSubscribers();
     return undefined;
   }
@@ -64,12 +79,14 @@ export class RabbitmqServer extends Context implements Server {
           return;
         }
         await Promise.all(
-          this.config.exchanges.map(exchange => {
-            channel.assertExchange(exchange.name, exchange.type).catch(err => {
-              console.log(err);
-            });
+          this.config.exchanges.map((exchange) => {
+            channel
+              .assertExchange(exchange.name, exchange.type)
+              .catch((err) => {
+                console.log(err);
+              });
           }),
-        ).catch(err => {
+        ).catch((err) => {
           throw err;
         });
       });
@@ -79,7 +96,7 @@ export class RabbitmqServer extends Context implements Server {
   }
 
   private async bindSubscribers() {
-    this.getSubscribers().map(async item => {
+    this.getSubscribers().map(async (item) => {
       await this._channelManager.addSetup(async (channel: ConfirmChannel) => {
         const {exchange, routingKey, queue, queueOptions} = item.metadata;
         const assertQueue = await channel.assertQueue(
@@ -91,7 +108,7 @@ export class RabbitmqServer extends Context implements Server {
           : [routingKey];
 
         await Promise.all(
-          routingKeys.map(x =>
+          routingKeys.map((x) =>
             channel.bindQueue(assertQueue.queue, exchange, x),
           ),
         );
@@ -114,7 +131,7 @@ export class RabbitmqServer extends Context implements Server {
     method: Function;
   }) {
     // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    await channel.consume(queue, async message => {
+    await channel.consume(queue, async (message) => {
       try {
         if (!message) {
           throw new Error('Received null Message');
@@ -152,10 +169,11 @@ export class RabbitmqServer extends Context implements Server {
     const bindings: Array<Readonly<Binding>> = this.find('services.*');
 
     return bindings
-      .map(binding => {
-        const metadata = MetadataInspector.getAllMethodMetadata<
-          RabbitmqSubscribeMetadata
-        >(RABBITMQ_SUBSCRIBE_DECORATOR, binding.valueConstructor?.prototype);
+      .map((binding) => {
+        const metadata = MetadataInspector.getAllMethodMetadata<RabbitmqSubscribeMetadata>(
+          RABBITMQ_SUBSCRIBE_DECORATOR,
+          binding.valueConstructor?.prototype,
+        );
 
         if (!metadata) {
           return [];

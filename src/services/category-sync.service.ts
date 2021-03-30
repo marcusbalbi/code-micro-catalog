@@ -3,6 +3,7 @@ import {repository} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {rabbitmqSubscribe} from '../decorators/rabbitmq-subscribe.decorator';
 import {CategoryRepository} from '../repositories';
+import {ResponseEnum} from '../servers';
 import {BaseModelSyncService} from './base-model-sync.service';
 import {ValidatorService} from './validator.service';
 @bind({scope: BindingScope.SINGLETON})
@@ -20,8 +21,12 @@ export class CategorySyncService extends BaseModelSyncService {
     exchange: 'amq.topic',
     routingKey: 'model.category.*',
     queue: 'micro-catalog/sync-videos/category',
+    queueOptions: {
+      deadLetterExchange: 'dlx.amq.topic',
+    },
   })
   async handler({data, message}: {data: any; message: Message}) {
+    return ResponseEnum.NACK;
     await this.sync({
       repo: this.repo,
       data,
