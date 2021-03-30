@@ -23,6 +23,11 @@ export interface RabbitmqConfig {
   uri: string;
   connOptions?: AmqpConnectionManagerOptions;
   exchanges?: {name: string; type: string; options?: Options.AssertExchange}[];
+  queues?: {
+    name: string;
+    options?: Options.AssertQueue;
+    exchange?: {name: string; routingKey: string};
+  }[];
   defaultHandlerError?: ResponseEnum;
 }
 
@@ -53,21 +58,7 @@ export class RabbitmqServer extends Context implements Server {
       console.log(`Failed connectig with RabbitMQ - ${name} : ${err.message}`);
     });
     await this.setupExchanges();
-    this._channelManager.addSetup(async (channel: ConfirmChannel) => {
-      const assertExchange = await channel.assertExchange(
-        'dlx.amq.topic',
-        'topic',
-      );
-      const assertQueue = await channel.assertQueue('dlx.sync-videos', {
-        deadLetterExchange: 'amq.topic',
-        messageTtl: 20000,
-      });
-      channel.bindQueue(
-        assertQueue.queue,
-        assertExchange.exchange,
-        'model.category.*',
-      );
-    });
+    await this.setupQueues();
     await this.bindSubscribers();
     return undefined;
   }
@@ -85,6 +76,37 @@ export class RabbitmqServer extends Context implements Server {
               .catch((err) => {
                 console.log(err);
               });
+          }),
+        ).catch((err) => {
+          throw err;
+        });
+      });
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
+  async setupQueues() {
+    try {
+      this._channelManager.addSetup(async (channel: ConfirmChannel) => {
+        if (!this.config.queues) {
+          return;
+        }
+        await Promise.all(
+          this.config.queues.map(async (queue) => {
+            await channel
+              .assertQueue(queue.name, queue.options)
+              .catch((err) => {
+                console.log(err);
+              });
+            if (!queue.exchange) {
+              return;
+            }
+            await channel.bindQueue(
+              queue.name,
+              queue.exchange.name,
+              queue.exchange.routingKey,
+            );
           }),
         ).catch((err) => {
           throw err;
