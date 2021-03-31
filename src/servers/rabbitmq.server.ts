@@ -35,6 +35,7 @@ export class RabbitmqServer extends Context implements Server {
   private _listening: boolean;
   private _conn: AmqpConnectionManager;
   private _channelManager: ChannelWrapper;
+  private _maxAttemptsLimit = 3;
   constructor(
     @inject(CoreBindings.APPLICATION_INSTANCE)
     public app: Application,
@@ -171,7 +172,10 @@ export class RabbitmqServer extends Context implements Server {
           this.dispatchResponse(channel, message, responseType);
         }
       } catch (err) {
-        console.log(err);
+        console.log(err, {
+          rountingKey: message?.fields.routingKey,
+          content: message?.content.toString(),
+        });
         if (!message) {
           return;
         }
@@ -231,7 +235,7 @@ export class RabbitmqServer extends Context implements Server {
         break;
       }
       case ResponseEnum.NACK: {
-        channel.nack(message, false, false);
+        this.handleNack({channel, message});
         break;
       }
       case ResponseEnum.ACK:
@@ -239,6 +243,31 @@ export class RabbitmqServer extends Context implements Server {
         channel.ack(message);
       }
     }
+  }
+
+  handleNack({channel, message}: {channel: Channel; message: Message}) {
+    const canDeadLetter = this.canDeadLetter({channel, message});
+    if (canDeadLetter) {
+      console.log(`Nack in Message`, {content: message.content.toString()});
+      channel.nack(message, false, false);
+    } else {
+      channel.ack(message);
+    }
+  }
+
+  canDeadLetter({channel, message}: {channel: Channel; message: Message}) {
+    if (message.properties.headers && 'x-death' in message.properties.headers) {
+      const count = message.properties.headers['x-death']![0].count;
+      if (count >= this._maxAttemptsLimit) {
+        channel.ack(message);
+        const queue = message.properties.headers['x-death']![0].queue;
+        console.error(
+          `Ack in ${queue} with error. Max Attempts exceeded ${this._maxAttemptsLimit}`,
+        );
+        return false;
+      }
+    }
+    return true;
   }
 
   async stop(): Promise<void> {
