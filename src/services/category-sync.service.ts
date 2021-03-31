@@ -26,7 +26,6 @@ export class CategorySyncService extends BaseModelSyncService {
     },
   })
   async handler({data, message}: {data: any; message: Message}) {
-    return ResponseEnum.NACK;
     await this.sync({
       repo: this.repo,
       data,
