@@ -2,7 +2,7 @@ import {BootMixin} from '@loopback/boot';
 import {Application, ApplicationConfig} from '@loopback/core';
 import {RestExplorerBindings} from '@loopback/rest-explorer';
 import {RepositoryMixin} from '@loopback/repository';
-import {RestComponent, RestServer} from '@loopback/rest';
+import {RestBindings, RestComponent, RestServer} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
@@ -12,6 +12,7 @@ import {
   RestExplorerComponent,
   ValidatorsComponent,
 } from './components';
+import {ApiResourceProvider} from './providers/api-resource.provider';
 // import {CategoryRepository, GenreRepository} from './repositories';
 
 export class MicroCatalogApplication extends BootMixin(
@@ -32,7 +33,9 @@ export class MicroCatalogApplication extends BootMixin(
       path: '/explorer',
     });
     this.component(RestExplorerComponent);
-
+    this.bind(RestBindings.SequenceActions.SEND).toProvider(
+      ApiResourceProvider,
+    );
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
     this.bootOptions = {
