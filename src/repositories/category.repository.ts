@@ -1,9 +1,9 @@
 import {inject} from '@loopback/core';
-import {DefaultCrudRepository} from '@loopback/repository';
 import {Esv7DataSource} from '../datasources';
 import {Category, CategoryRelations} from '../models';
+import {BaseRepository} from './base.repository';
 
-export class CategoryRepository extends DefaultCrudRepository<
+export class CategoryRepository extends BaseRepository<
   Category,
   typeof Category.prototype.id,
   CategoryRelations

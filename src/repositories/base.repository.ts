@@ -17,7 +17,7 @@ export class BaseRepository<
     const {count} = await this.count(filter?.where, options);
     const limit = filter?.limit ?? this.dataSource.settings.defaultSize;
     const offset = filter?.offset ?? 0;
-    return new PaginatorSerializer(result, count, limit, offset);
+    return new PaginatorSerializer<T>(result, count, limit, offset);
   }
   async attachRelation(id: ID, relationName: string, data: object[]) {
     const document = {
