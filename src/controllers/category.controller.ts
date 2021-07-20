@@ -6,18 +6,7 @@ import {
   repository,
   Where,
 } from '@loopback/repository';
-import {
-  post,
-  param,
-  get,
-  getFilterSchemaFor,
-  getModelSchemaRef,
-  getWhereSchemaFor,
-  patch,
-  put,
-  del,
-  requestBody,
-} from '@loopback/rest';
+import {param, get, getModelSchemaRef} from '@loopback/rest';
 import {Category} from '../models';
 import {CategoryRepository} from '../repositories';
 
