@@ -15,8 +15,10 @@ export class BaseRepository<
   async paginate(filter?: Filter<T>, options?: Options) {
     const result = await this.find(filter, options);
     const {count} = await this.count(filter?.where, options);
-    const limit = filter?.limit ?? this.dataSource.settings.defaultSize;
-    const offset = filter?.offset ?? 0;
+    let limit = filter?.limit ?? this.dataSource.settings.defaultSize;
+    limit = parseInt(limit);
+    let offset = filter?.offset ?? 0;
+    offset = parseInt(offset + '');
     return new PaginatorSerializer<T>(result, count, limit, offset);
   }
   async attachRelation(id: ID, relationName: string, data: object[]) {

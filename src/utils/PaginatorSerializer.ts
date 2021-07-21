@@ -5,13 +5,16 @@ import {stringify} from 'qs';
 export class PaginatorSerializer<T = any> {
   @Exclude()
   baseUrl: string;
+  numberOfPages: number;
 
   constructor(
     public results: T[],
     public count: number,
     public limit: number,
     public offset: number,
-  ) {}
+  ) {
+    this.numberOfPages = Math.ceil(count / limit);
+  }
 
   @Expose()
   get previous_url(): string | null {
@@ -20,7 +23,9 @@ export class PaginatorSerializer<T = any> {
       previous = `${this.baseUrl}?${stringify({
         filter: {
           limit: this.limit,
-          ...(this.offset - this.limit >= 0 && {offset: this.offset}),
+          ...(this.offset - this.limit >= 0 && {
+            offset: this.offset - this.limit,
+          }),
         },
       })}`;
     }
@@ -43,7 +48,7 @@ export class PaginatorSerializer<T = any> {
   }
 
   toJson(req: RequestContext) {
-    this.baseUrl = `${req.requestedBaseUrl}${req.request.url}`;
+    this.baseUrl = `${req.requestedBaseUrl}${req.request.url}`.split('?')[0];
     return classToPlain(this);
     // return {
     //   results: this.results,
