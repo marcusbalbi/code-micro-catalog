@@ -1,7 +1,9 @@
 import {
   Count,
   CountSchema,
+  EntityNotFoundError,
   Filter,
+  FilterBuilder,
   FilterExcludingWhere,
   repository,
   Where,
@@ -47,8 +49,10 @@ export class CategoryController {
   async find(
     @param.filter(Category) filter?: Filter<Category>,
   ): Promise<PaginatorSerializer<Category>> {
-    console.log(filter);
-    return this.categoryRepository.paginate(filter);
+    const newFilter = new FilterBuilder(filter)
+      .where({is_active: true})
+      .build();
+    return this.categoryRepository.paginate(newFilter);
   }
 
   @get('/categories/{id}', {
@@ -66,8 +70,17 @@ export class CategoryController {
   async findById(
     @param.path.string('id') id: string,
     @param.filter(Category, {exclude: 'where'})
-    filter?: FilterExcludingWhere<Category>,
+    filter?: Filter<Category>,
   ): Promise<Category> {
-    return this.categoryRepository.findById(id, filter);
+    const newFilter = new FilterBuilder(filter)
+      .where({is_active: true, id})
+      .build();
+    const result = await this.categoryRepository.findOne(newFilter);
+
+    if (!result) {
+      throw new EntityNotFoundError(Category.name, id);
+    }
+
+    return result;
   }
 }
