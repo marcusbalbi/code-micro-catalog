@@ -57,6 +57,7 @@
     "@loopback/service-proxy": "^2.0.3",
     "amqp-connection-manager": "^3.2.2",
     "amqplib": "^0.7.1",
+    "class-transformer": "^0.4.0",
     "dotenv": "^8.2.0",
     "lodash": "^4.17.21",
     "loopback-connector-esv6": "2.1.1"
@@ -65,8 +66,8 @@
     "@loopback/build": "^5.0.1",
     "@loopback/eslint-config": "^6.0.3",
     "@loopback/testlab": "^3.0.0",
-    "@types/amqplib": "^0.5.13",
     "@types/amqp-connection-manager": "^2.0.10",
+    "@types/amqplib": "^0.5.13",
     "@types/lodash": "^4.14.152",
     "@types/node": "^10.17.19",
     "@typescript-eslint/eslint-plugin": "^2.27.0",
