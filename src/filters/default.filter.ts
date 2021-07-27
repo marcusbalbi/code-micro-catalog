@@ -1,4 +1,3 @@
-import {getJsonSchema} from '@loopback/openapi-v3';
 import {
   AnyObject,
   Filter,
@@ -8,17 +7,18 @@ import {
   Where,
   WhereBuilder,
 } from '@loopback/repository';
+import {getJsonSchema} from '@loopback/repository-json-schema';
 import {clone} from 'lodash';
 
 export abstract class DefaultFilter<
   MT extends object = AnyObject
 > extends FilterBuilder<MT> {
-  dFilter: Filter<MT> | null;
+  defaultWhere: Where<MT> | null | undefined;
   constructor(f?: Filter<MT>) {
     super(f);
     const dFilter = this.defaultFilter();
-    this.dFilter = dFilter ? clone(dFilter.filter) : null;
-    this.filter = {};
+    this.defaultWhere = dFilter ? clone(dFilter.filter.where) : null;
+    this.filter.where = {};
   }
 
   protected defaultFilter(): DefaultFilter<MT> | void {}
@@ -27,7 +27,7 @@ export abstract class DefaultFilter<
     this.filter.where = new WhereBuilder<{is_active: boolean}>(
       this.filter.where,
     )
-      .and({is_active: true})
+      .eq('is_active', true) //and também é possível
       .build() as Where<MT>;
     this.isActiveRelations(modelCtor);
     return this;
@@ -39,8 +39,8 @@ export abstract class DefaultFilter<
     if (!relations.length) {
       return this;
     }
-    const schema = getJsonSchema(modelCtor);
 
+    const schema = getJsonSchema(modelCtor);
     const relationsFiltered = relations.filter((r) => {
       const jsonSchema = schema.properties?.[r] as JsonSchema;
       if (
@@ -50,30 +50,26 @@ export abstract class DefaultFilter<
         return false;
       }
 
-      return Object.keys(
-        (jsonSchema.items as any).properties || jsonSchema.properties,
-      ).includes('is_active');
+      const properties =
+        (jsonSchema.items as any).properties || jsonSchema.properties;
+
+      return Object.keys(properties).includes('is_active');
     });
 
     const whereStr = JSON.stringify(this.filter.where);
-
-    // (categories.*|relation.*)
     const regex = new RegExp(
       `(${relationsFiltered.map((r) => `${r}.*`).join('|')})`,
       'g',
     );
 
     const matches = whereStr.match(regex);
-
     if (!matches) {
       return this;
     }
 
     const fields = matches.map((m) => {
-      const relation = m.split('.')[0];
-      return {
-        [`${relation}.is_active`]: true,
-      };
+      const r = m.split('.')[0]; //categories
+      return {[`${r}.is_active`]: true};
     });
 
     this.filter.where = new WhereBuilder<{is_active: boolean}>(
@@ -85,6 +81,8 @@ export abstract class DefaultFilter<
   }
 
   build() {
-    return this.dFilter ? this.impose(this.dFilter).filter : this.filter;
+    return this.defaultWhere
+      ? this.impose(this.defaultWhere).filter
+      : this.filter;
   }
 }

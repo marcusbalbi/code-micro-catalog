@@ -1,0 +1,28 @@
+{
+  "indexSettings": {
+    "number_of_shards": 1,
+    "number_of_replicas": 1,
+    "max_ngram_diff": 7,
+    "analysis": {
+      "analyzer": {
+        "ngram_token_analyzer": {
+          "type": "custom",
+          "stopwords": "_none_",
+          "filter": ["lowercase", "asciifolding", "no_stop", "ngram_filter"],
+          "tokenizer": "whitespace"
+        }
+      },
+      "filter": {
+        "no_stop": {
+          "type": "stop",
+          "stopwords": "_none_"
+        },
+        "ngram_filter": {
+          "type": "nGram",
+          "min_gram": "2",
+          "max_gram": "9"
+        }
+      }
+    }
+  }
+}
