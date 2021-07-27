@@ -1,9 +1,7 @@
 import {MicroCatalogApplication} from '../..';
-import {
-  createRestAppClient,
-  givenHttpServerConfig,
-  Client,
-} from '@loopback/testlab';
+import {givenHttpServerConfig, Client} from '@loopback/testlab';
+import config from '../../../config';
+import supertest from 'supertest';
 
 export async function setupApplication(): Promise<AppWithClient> {
   const restConfig = givenHttpServerConfig({
@@ -11,17 +9,18 @@ export async function setupApplication(): Promise<AppWithClient> {
     // Empty values (undefined, '') will be ignored by the helper.
     //
     // host: process.env.HOST,
-    // port: +process.env.PORT,
+    port: 9000,
   });
 
   const app = new MicroCatalogApplication({
+    ...config,
     rest: restConfig,
   });
 
   await app.boot();
   await app.start();
-  // @ts-ignore
-  const client = createRestAppClient(app);
+
+  const client = supertest('http://127.0.0.1:9000');
 
   return {app, client};
 }
