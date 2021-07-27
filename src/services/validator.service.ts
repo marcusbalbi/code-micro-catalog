@@ -1,6 +1,6 @@
 import {bind, /* inject, */ BindingScope, inject} from '@loopback/core';
 import {getModelSchemaRef} from '@loopback/openapi-v3';
-import {Entity, model, repository} from '@loopback/repository';
+import {repository} from '@loopback/repository';
 import {AjvFactory, RestBindings, validateRequestBody} from '@loopback/rest';
 import {CategoryRepository} from '../repositories';
 

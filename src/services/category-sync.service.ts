@@ -3,7 +3,6 @@ import {repository} from '@loopback/repository';
 import {Message} from 'amqplib';
 import {rabbitmqSubscribe} from '../decorators/rabbitmq-subscribe.decorator';
 import {CategoryRepository} from '../repositories';
-import {ResponseEnum} from '../servers';
 import {BaseModelSyncService} from './base-model-sync.service';
 import {ValidatorService} from './validator.service';
 @bind({scope: BindingScope.SINGLETON})

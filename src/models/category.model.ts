@@ -1,5 +1,4 @@
 import {Entity, model, property} from '@loopback/repository';
-import {Exclude} from 'class-transformer';
 
 export interface SmallCategory {
   id: string;
